@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana DEX Events WebSocket Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .controls input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .controls button {
+            padding: 10px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .controls button:hover {
+            background: #5568d3;
+        }
+
+        .controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 10px 30px;
+            background: #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.connected {
+            background: #28a745;
+            box-shadow: 0 0 10px #28a745;
+        }
+
+        .status-indicator.disconnected {
+            background: #dc3545;
+        }
+
+        .events {
+            padding: 20px 30px;
+            height: 600px;
+            overflow-y: auto;
+        }
+
+        .event-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .event-type {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .event-time {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .event-details {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #495057;
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        .event-details pre {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Solana DEX Events Monitor</h1>
+            <p>实时监听 PumpFun, Raydium, Orca 等 DEX 交易事件</p>
+        </div>
+
+        <div class="controls">
+            <input type="text" id="wsUrl" value="ws://127.0.0.1:9001" placeholder="WebSocket URL">
+            <button id="connectBtn" onclick="toggleConnection()">连接</button>
+            <button id="pauseBtn" onclick="togglePause()" disabled>暂停</button>
+            <button id="clearBtn" onclick="clearEvents()">清空</button>
+        </div>
+
+        <div class="status">
+            <div>
+                <span class="status-indicator disconnected" id="statusIndicator"></span>
+                <span id="statusText">未连接</span>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>📊 总事件:</span>
+                    <strong id="eventCount">0</strong>
+                </div>
+                <div class="stat-item">
+                    <span>⚡ 延迟:</span>
+                    <strong id="latency">-</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="events" id="eventsContainer">
+            <div style="text-align: center; color: #6c757d; padding: 50px;">
+                等待连接到 WebSocket 服务器...
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script>
+        let ws = null;
+        let eventCount = 0;
+        let isConnected = false;
+        let isPaused = false;
+        let pendingEvents = [];
+
+        // Base58 字母表
+        const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+        // 简化的 base58 编码实现
+        function base58Encode(bytes) {
+            const digits = [0];
+
+            for (let i = 0; i < bytes.length; i++) {
+                let carry = bytes[i];
+                for (let j = 0; j < digits.length; j++) {
+                    carry += digits[j] << 8;
+                    digits[j] = carry % 58;
+                    carry = (carry / 58) | 0;
+                }
+                while (carry > 0) {
+                    digits.push(carry % 58);
+                    carry = (carry / 58) | 0;
+                }
+            }
+
+            // 处理前导零
+            for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
+                digits.push(0);
+            }
+
+            return digits.reverse().map(d => BASE58_ALPHABET[d]).join('');
+        }
+
+        // Pubkey 数组转换为 base58 字符串
+        function pubkeyArrayToString(arr) {
+            try {
+                const uint8Array = new Uint8Array(arr);
+                // 优先使用 Solana Web3.js
+                if (typeof solanaWeb3 !== 'undefined' && solanaWeb3.PublicKey) {
+                    return new solanaWeb3.PublicKey(uint8Array).toBase58();
+                }
+                // 降级使用自定义实现
+                return base58Encode(uint8Array);
+            } catch (e) {
+                console.error('Pubkey conversion error:', e);
+                return arr.join(',');
+            }
+        }
+
+        // Signature 数组转换为 base58 字符串
+        function signatureArrayToString(arr) {
+            try {
+                const uint8Array = new Uint8Array(arr);
+                return base58Encode(uint8Array);
+            } catch (e) {
+                console.error('Signature conversion error:', e);
+                return arr.join(',');
+            }
+        }
+
+        // 递归转换对象中的所有 Pubkey 和 Signature 数组
+        function convertArraysInObject(obj, path = '') {
+            if (Array.isArray(obj)) {
+                // 检查是否是 Signature (64 字节数组)
+                if (obj.length === 64 && obj.every(n => typeof n === 'number' && n >= 0 && n <= 255)) {
+                    // 如果字段名是 signature，转换为 base58
+                    if (path.endsWith('.signature') || path === 'signature') {
+                        return signatureArrayToString(obj);
+                    }
+                }
+                // 检查是否是 Pubkey (32 字节数组)
+                if (obj.length === 32 && obj.every(n => typeof n === 'number' && n >= 0 && n <= 255)) {
+                    return pubkeyArrayToString(obj);
+                }
+                return obj.map((item, idx) => convertArraysInObject(item, `${path}[${idx}]`));
+            } else if (obj && typeof obj === 'object') {
+                const converted = {};
+                for (const [key, value] of Object.entries(obj)) {
+                    const newPath = path ? `${path}.${key}` : key;
+                    converted[key] = convertArraysInObject(value, newPath);
+                }
+                return converted;
+            }
+            return obj;
+        }
+
+        function toggleConnection() {
+            if (isConnected) {
+                disconnect();
+            } else {
+                connect();
+            }
+        }
+
+        function connect() {
+            const url = document.getElementById('wsUrl').value;
+
+            try {
+                ws = new WebSocket(url);
+
+                ws.onopen = () => {
+                    isConnected = true;
+                    updateStatus('已连接', true);
+                    document.getElementById('connectBtn').textContent = '断开';
+                    document.getElementById('pauseBtn').disabled = false;
+                    addSystemMessage('✅ 成功连接到服务器');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const clientRecvUs = Date.now() * 1000;
+
+                        const rawData = JSON.parse(event.data);
+                        // 转换所有 Pubkey 和 Signature 数组为字符串
+                        const data = convertArraysInObject(rawData);
+
+                        // 计算延迟
+                        const eventData = Object.values(data)[0];
+                        let latencyMs = null;
+                        if (eventData?.metadata?.grpc_recv_us) {
+                            const grpcRecvUs = eventData.metadata.grpc_recv_us;
+                            const latencyUs = clientRecvUs - grpcRecvUs;
+                            latencyMs = (latencyUs / 1000).toFixed(2);
+
+                            // 调试输出
+                            if (latencyUs < 0) {
+                                console.warn('Negative latency detected:', {
+                                    clientRecvUs,
+                                    grpcRecvUs,
+                                    latencyUs,
+                                    absoluteMs
+                                });
+                            }
+
+                            document.getElementById('latency').textContent = latencyMs + ' ms';
+                        }
+
+                        // 如果暂停，将事件加入待处理队列
+                        if (isPaused) {
+                            pendingEvents.push({ data, latencyMs });
+                            // 限制待处理事件数量，避免内存溢出
+                            if (pendingEvents.length > 100) {
+                                pendingEvents.shift();
+                            }
+                        } else {
+                            addEvent(data, latencyMs);
+                            eventCount++;
+                            document.getElementById('eventCount').textContent = eventCount;
+                        }
+                    } catch (e) {
+                        console.error('解析消息失败:', e);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    addSystemMessage('❌ 连接错误');
+                };
+
+                ws.onclose = () => {
+                    isConnected = false;
+                    isPaused = false;
+                    updateStatus('未连接', false);
+                    document.getElementById('connectBtn').textContent = '连接';
+                    document.getElementById('pauseBtn').textContent = '暂停';
+                    document.getElementById('pauseBtn').disabled = true;
+                    addSystemMessage('🔌 连接已断开');
+                };
+            } catch (e) {
+                alert('连接失败: ' + e.message);
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+
+            if (isPaused) {
+                pauseBtn.textContent = '恢复';
+                pauseBtn.style.background = '#ffc107';
+                addSystemMessage('⏸️ 已暂停更新');
+            } else {
+                pauseBtn.textContent = '暂停';
+                pauseBtn.style.background = '#667eea';
+
+                // 恢复时处理待处理的事件
+                if (pendingEvents.length > 0) {
+                    addSystemMessage(`▶️ 恢复更新 (跳过 ${pendingEvents.length} 个事件)`);
+                    pendingEvents = [];
+                } else {
+                    addSystemMessage('▶️ 恢复更新');
+                }
+            }
+        }
+
+        function updateStatus(text, connected) {
+            document.getElementById('statusText').textContent = text;
+            const indicator = document.getElementById('statusIndicator');
+            indicator.className = 'status-indicator ' + (connected ? 'connected' : 'disconnected');
+        }
+
+        function addEvent(eventData, latencyMs) {
+            const container = document.getElementById('eventsContainer');
+
+            if (container.children.length === 1 && container.children[0].style.textAlign === 'center') {
+                container.innerHTML = '';
+            }
+
+            const eventCard = document.createElement('div');
+            eventCard.className = 'event-card';
+
+            let eventType = 'Unknown';
+            let eventDetails = eventData;
+
+            if (eventData.PumpFunTrade) {
+                eventType = '🔥 PumpFun Trade';
+                eventDetails = eventData.PumpFunTrade;
+            } else if (eventData.PumpFunCreate) {
+                eventType = '🆕 PumpFun Create';
+                eventDetails = eventData.PumpFunCreate;
+            } else if (eventData.RaydiumAmmV4Swap) {
+                eventType = '💧 Raydium AMM Swap';
+                eventDetails = eventData.RaydiumAmmV4Swap;
+            } else if (eventData.RaydiumClmmSwap) {
+                eventType = '💦 Raydium CLMM Swap';
+                eventDetails = eventData.RaydiumClmmSwap;
+            } else if (eventData.OrcaWhirlpoolSwap) {
+                eventType = '🌊 Orca Whirlpool Swap';
+                eventDetails = eventData.OrcaWhirlpoolSwap;
+            }
+
+            const now = new Date().toLocaleTimeString('zh-CN');
+
+            // 延迟显示颜色
+            let latencyBadge = '';
+            if (latencyMs !== null) {
+                const latency = parseFloat(latencyMs);
+                const color = latency < 50 ? '#28a745' : latency < 100 ? '#ffc107' : '#dc3545';
+                latencyBadge = `<span style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 10px;">⚡ ${latencyMs} ms</span>`;
+            }
+
+            eventCard.innerHTML = `
+                <div class="event-header">
+                    <span class="event-type">${eventType}${latencyBadge}</span>
+                    <span class="event-time">${now}</span>
+                </div>
+                <div class="event-details">
+                    <pre>${JSON.stringify(eventDetails, null, 2)}</pre>
+                </div>
+            `;
+
+            container.insertBefore(eventCard, container.firstChild);
+
+            if (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function addSystemMessage(message) {
+            const container = document.getElementById('eventsContainer');
+
+            if (container.children.length === 1 && container.children[0].style.textAlign === 'center') {
+                container.innerHTML = '';
+            }
+
+            const messageCard = document.createElement('div');
+            messageCard.className = 'event-card';
+            messageCard.style.borderLeftColor = '#6c757d';
+
+            const now = new Date().toLocaleTimeString('zh-CN');
+
+            messageCard.innerHTML = `
+                <div class="event-header">
+                    <span class="event-type">${message}</span>
+                    <span class="event-time">${now}</span>
+                </div>
+            `;
+
+            container.insertBefore(messageCard, container.firstChild);
+        }
+
+        function clearEvents() {
+            const container = document.getElementById('eventsContainer');
+            container.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 50px;">事件已清空</div>';
+            eventCount = 0;
+            document.getElementById('eventCount').textContent = '0';
+        }
+
+        // 页面加载时检查依赖库
+        window.addEventListener('load', () => {
+            console.log('Checking dependencies...');
+            console.log('solanaWeb3 loaded:', typeof solanaWeb3 !== 'undefined');
+            console.log('base58Encode function available:', typeof base58Encode === 'function');
+
+            if (typeof solanaWeb3 === 'undefined') {
+                console.warn('⚠️  Solana Web3.js not loaded! Using fallback base58 encoder.');
+            }
+
+            // 测试 base58 编码
+            const testBytes = new Uint8Array([1, 2, 3, 4, 5]);
+            const encoded = base58Encode(testBytes);
+            console.log('Base58 test:', testBytes, '->', encoded);
+        });
+    </script>
+</body>
+</html>

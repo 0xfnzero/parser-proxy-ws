@@ -1,0 +1,21 @@
+{
+  "name": "parser-proxy-ws-client",
+  "version": "1.0.0",
+  "description": "TypeScript client for Parser Proxy WebSocket",
+  "main": "client.ts",
+  "scripts": {
+    "start": "ts-node client.ts",
+    "build": "tsc client.ts"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.8",
+    "bs58": "^6.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/ws": "^8.5.13",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,33 @@
+[package]
+name = "parser-proxy-ws"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sol-parser-sdk = { path = "./sol-parser-sdk" }
+
+tokio = { version = "1.42.0", features = ["full", "rt-multi-thread"] }
+tokio-tungstenite = "0.24"
+tungstenite = "0.24"
+futures = "0.3"
+futures-util = "0.3"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+solana-sdk = "3.0.0"
+
+dashmap = "6.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rustls = { version = "0.23.23", features = ["ring"], default-features = false }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

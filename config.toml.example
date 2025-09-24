@@ -1,0 +1,101 @@
+# Parser Proxy WebSocket 配置文件 (完整版)
+
+[server]
+host = "127.0.0.1"
+port = 9001
+
+[grpc]
+endpoint = "https://solana-yellowstone-grpc.publicnode.com:443"
+token = ""
+enable_metrics = true
+enable_tls = true
+connection_timeout_ms = 10000
+request_timeout_ms = 30000
+
+[protocols]
+pumpfun = true
+pumpswap = false
+bonk = false
+raydium_amm_v4 = false
+raydium_clmm = false
+raydium_cpmm = false
+
+[events]
+# Block 事件
+block_meta = false
+
+# Bonk 事件
+bonk_trade = false
+bonk_pool_create = false
+bonk_migrate_amm = false
+
+# PumpFun 事件
+pumpfun_trade = true
+pumpfun_create = true
+pumpfun_complete = false
+pumpfun_migrate = false
+
+# PumpSwap 事件
+pumpswap_buy = false
+pumpswap_sell = false
+pumpswap_create_pool = false
+pumpswap_pool_created = false
+pumpswap_trade = false
+pumpswap_liquidity_added = false
+pumpswap_liquidity_removed = false
+pumpswap_pool_updated = false
+pumpswap_fees_claimed = false
+
+# Raydium CPMM 事件
+raydium_cpmm_swap = false
+raydium_cpmm_deposit = false
+raydium_cpmm_withdraw = false
+raydium_cpmm_initialize = false
+
+# Raydium CLMM 事件
+raydium_clmm_swap = false
+raydium_clmm_create_pool = false
+raydium_clmm_open_position = false
+raydium_clmm_close_position = false
+raydium_clmm_increase_liquidity = false
+raydium_clmm_decrease_liquidity = false
+raydium_clmm_open_position_with_token_ext_nft = false
+raydium_clmm_collect_fee = false
+
+# Raydium AMM V4 事件
+raydium_amm_v4_swap = false
+raydium_amm_v4_deposit = false
+raydium_amm_v4_withdraw = false
+raydium_amm_v4_initialize2 = false
+raydium_amm_v4_withdraw_pnl = false
+
+# Orca Whirlpool 事件
+orca_whirlpool_swap = false
+orca_whirlpool_liquidity_increased = false
+orca_whirlpool_liquidity_decreased = false
+orca_whirlpool_pool_initialized = false
+
+# Meteora Pools 事件
+meteora_pools_swap = false
+meteora_pools_add_liquidity = false
+meteora_pools_remove_liquidity = false
+meteora_pools_bootstrap_liquidity = false
+meteora_pools_pool_created = false
+meteora_pools_set_pool_fees = false
+
+# Meteora DAMM V2 事件
+meteora_damm_v2_swap = false
+meteora_damm_v2_add_liquidity = false
+meteora_damm_v2_remove_liquidity = false
+meteora_damm_v2_initialize_pool = false
+meteora_damm_v2_create_position = false
+meteora_damm_v2_close_position = false
+meteora_damm_v2_claim_position_fee = false
+meteora_damm_v2_initialize_reward = false
+meteora_damm_v2_fund_reward = false
+meteora_damm_v2_claim_reward = false
+
+# Account 事件
+token_account = false
+nonce_account = false
+token_info = false

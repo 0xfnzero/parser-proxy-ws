@@ -1,0 +1,68 @@
+# Parser Proxy WebSocket 配置文件
+
+[server]
+# WebSocket 服务器监听地址
+host = "127.0.0.1"
+# WebSocket 服务器监听端口
+port = 9001
+
+[grpc]
+# Yellowstone gRPC 端点地址
+endpoint = "https://solana-yellowstone-grpc.publicnode.com:443"
+# gRPC 认证 Token (可选)
+token = ""
+# 启用性能指标
+enable_metrics = true
+# 启用 TLS
+enable_tls = true
+# 连接超时 (毫秒)
+connection_timeout_ms = 10000
+# 请求超时 (毫秒)
+request_timeout_ms = 30000
+
+# 协议选择 - 启用要监听的 DEX 协议
+[protocols]
+pumpfun = true
+pumpswap = false
+bonk = false
+raydium_amm_v4 = false
+raydium_clmm = false
+raydium_cpmm = false
+
+# 事件过滤 - 启用要接收的事件类型
+[events]
+# PumpFun 事件
+pumpfun_trade = true
+pumpfun_create = true
+
+# PumpSwap 事件
+pumpswap_trade = false
+pumpswap_buy = false
+pumpswap_sell = false
+
+# Bonk 事件
+bonk_trade = false
+bonk_pool_create = false
+
+# Raydium AMM V4 事件
+raydium_amm_v4_swap = false
+raydium_amm_v4_deposit = false
+raydium_amm_v4_withdraw = false
+
+# Raydium CLMM 事件
+raydium_clmm_swap = false
+raydium_clmm_create_pool = false
+
+# Raydium CPMM 事件
+raydium_cpmm_swap = false
+raydium_cpmm_deposit = false
+raydium_cpmm_withdraw = false
+
+# Orca Whirlpool 事件
+orca_whirlpool_swap = false
+
+# Meteora Pools 事件
+meteora_pools_swap = false
+
+# Meteora DAMM V2 事件
+meteora_damm_v2_swap = false
