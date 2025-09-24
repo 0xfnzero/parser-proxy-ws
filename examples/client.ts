@@ -57,8 +57,11 @@ ws.on('open', function open() {
 });
 
 ws.on('message', function message(data: WebSocket.Data) {
-    const absoluteMs = performance.timeOrigin + performance.now();
-    const clientRecvUs = Math.floor(absoluteMs * 1000);
+    // 使用 performance.now() 获取高精度时间戳（亚毫秒）
+    // performance.timeOrigin 是进程启动时的 Unix 时间戳（毫秒）
+    // performance.now() 是从进程启动到现在的时间（毫秒，带小数）
+    const nowMs = performance.timeOrigin + performance.now();
+    const clientRecvUs = Math.floor(nowMs * 1000);
 
     try {
         const rawEvent = JSON.parse(data.toString());
@@ -75,9 +78,16 @@ ws.on('message', function message(data: WebSocket.Data) {
         console.log('📊 New Event Received:', new Date().toISOString());
 
         if (grpcRecvUs !== undefined) {
-            const latencyUs = Math.max(0, clientRecvUs - grpcRecvUs);
+            const rawLatencyUs = clientRecvUs - grpcRecvUs;
+            const latencyUs = Math.max(0, rawLatencyUs);
             const latencyMs = (latencyUs / 1000).toFixed(2);
             const latencyColor = latencyUs < 50000 ? '\x1b[32m' : latencyUs < 100000 ? '\x1b[33m' : '\x1b[31m';
+
+            // 调试输出：显示原始延迟（可能为负）
+            if (rawLatencyUs < 0) {
+                console.log(`\x1b[90m⚠️  Raw latency was negative: ${rawLatencyUs} μs (likely clock skew)\x1b[0m`);
+            }
+
             console.log(`⏱️  gRPC Receive Time: ${grpcRecvUs} μs`);
             console.log(`⏱️  Client Receive Time: ${clientRecvUs} μs`);
             console.log(`${latencyColor}⚡ Total Latency: ${latencyMs} ms (${latencyUs} μs)\x1b[0m`);
