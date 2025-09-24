@@ -43,7 +43,7 @@ A WebSocket proxy server for Solana DEX events based on [sol-parser-sdk](./sol-p
 - 🎯 **Event Filtering** - Only push events you care about
 - ⚙️ **TOML Configuration** - All parameters flexibly configurable via config file
 - 🔄 **Auto Reconnection** - Automatic client cleanup on disconnect
-- 📝 **Multi-language Clients** - Examples in HTML, JavaScript, TypeScript, Python
+- 📝 **Multi-language Clients** - Examples in HTML, TypeScript, Python
 
 ## 🏗️ Architecture
 
@@ -67,7 +67,7 @@ A WebSocket proxy server for Solana DEX events based on [sol-parser-sdk](./sol-p
          │
          ▼
 ┌─────────────────────────────────────┐
-│  Clients (HTML/JS/Python/...)       │
+│  Clients (HTML/TS/Python/...)       │
 │  (Real-time DEX Events)             │
 └─────────────────────────────────────┘
 ```
