@@ -2,32 +2,74 @@
 name = "parser-proxy-ws"
 version = "0.1.0"
 edition = "2021"
+authors = ["Parser Proxy Team"]
+license = "MIT"
+description = "High-performance Solana DEX event parsing and WebSocket streaming library"
+repository = "https://github.com/your-repo/parser-proxy-ws"
+keywords = ["solana", "dex", "trading", "websocket", "parser"]
+categories = ["api-bindings", "network-programming", "finance"]
+readme = "README.md"
+
+# Library configuration
+[lib]
+name = "parser_proxy_ws"
+path = "src/lib.rs"
+
+# Binary configuration (optional - for standalone usage)
+[[bin]]
+name = "parser-proxy-ws"
+path = "src/main.rs"
+required-features = ["binary"]
 
 [dependencies]
+# Core dependencies
 sol-parser-sdk = { path = "./sol-parser-sdk" }
-
 tokio = { version = "1.42.0", features = ["full", "rt-multi-thread"] }
+anyhow = "1.0"
+tracing = "0.1"
+
+# WebSocket dependencies
 tokio-tungstenite = "0.24"
 tungstenite = "0.24"
 futures = "0.3"
 futures-util = "0.3"
+dashmap = "6.0"
 
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
 
+# Solana
 solana-sdk = "3.0.0"
 
-dashmap = "6.0"
-anyhow = "1.0"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# Crypto/TLS
 rustls = { version = "0.23.23", features = ["ring"], default-features = false }
+
+# Optional dependencies for binary
+tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
 
 [dev-dependencies]
 tokio-test = "0.4"
+tempfile = "3.0"
+dotenv = "0.15.0"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[features]
+default = []
+binary = ["tracing-subscriber"]  # Required for the standalone binary
 
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
+panic = "abort"
+
+# Optimizations for library usage
+[profile.release.package."*"]
+opt-level = 3
+
+# Metadata for docs.rs
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
