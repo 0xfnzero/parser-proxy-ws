@@ -23,7 +23,7 @@ required-features = ["binary"]
 
 [dependencies]
 # Core dependencies
-sol-parser-sdk = { path = "./sol-parser-sdk" }
+sol-parser-sdk = "0.1.0"
 tokio = { version = "1.42.0", features = ["full", "rt-multi-thread"] }
 anyhow = "1.0"
 tracing = "0.1"
