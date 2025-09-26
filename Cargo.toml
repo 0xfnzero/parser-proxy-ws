@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Parser Proxy Team"]
 license = "MIT"
 description = "High-performance Solana DEX event parsing and WebSocket streaming library"
-repository = "https://github.com/your-repo/parser-proxy-ws"
+repository = "https://github.com/0xfnzero/sol-parser-sdk"
 keywords = ["solana", "dex", "trading", "websocket", "parser"]
 categories = ["api-bindings", "network-programming", "finance"]
 readme = "README.md"
@@ -23,14 +23,14 @@ required-features = ["binary"]
 
 [dependencies]
 # Core dependencies
-sol-parser-sdk = { path = "./sol-parser-sdk" }
+sol-parser-sdk = { version = "0.1.0"}
 tokio = { version = "1.42.0", features = ["full", "rt-multi-thread"] }
 anyhow = "1.0"
 tracing = "0.1"
 
 # WebSocket dependencies
-tokio-tungstenite = "0.24"
-tungstenite = "0.24"
+tokio-tungstenite = "0.28.0"
+tungstenite = "0.28.0"
 futures = "0.3"
 futures-util = "0.3"
 dashmap = "6.0"
@@ -38,7 +38,7 @@ dashmap = "6.0"
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-toml = "0.8"
+toml = "0.9.7"
 
 # Solana
 solana-sdk = "3.0.0"
