@@ -2,10 +2,10 @@
 name = "parser-proxy-ws"
 version = "0.1.0"
 edition = "2021"
-authors = ["Parser Proxy Team"]
+authors = ["William <byteblock6@gmail.com>", "sgxiang <sgxiang@gmail.com>", "wei <1415121722@qq.com>"]
 license = "MIT"
 description = "High-performance Solana DEX event parsing and WebSocket streaming library"
-repository = "https://github.com/your-repo/parser-proxy-ws"
+repository = "https://github.com/0xfnzero/parser-proxy-ws"
 keywords = ["solana", "dex", "trading", "websocket", "parser"]
 categories = ["api-bindings", "network-programming", "finance"]
 readme = "README.md"
