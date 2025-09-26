@@ -1,6 +1,6 @@
 [package]
 name = "parser-proxy-ws"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["William <byteblock6@gmail.com>", "sgxiang <sgxiang@gmail.com>", "wei <1415121722@qq.com>"]
 license = "MIT"
